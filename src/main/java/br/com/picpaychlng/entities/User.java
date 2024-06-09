@@ -2,6 +2,7 @@ package br.com.picpaychlng.entities;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import java.util.Objects;
 
 @Entity
 @Table(name = "user")
@@ -29,6 +30,17 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "user_type")
     private UserType userType;
+
+    public User() {
+    }
+
+    public User(String cpf, String email, String name, String password, UserType userType) {
+        this.cpf = cpf;
+        this.email = email;
+        this.name = name;
+        this.password = password;
+        this.userType = userType;
+    }
 
     public Long getId() {
         return id;
@@ -74,6 +86,25 @@ public class User {
         this.userType = userType;
     }
 
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        User user = (User) o;
+        return Objects.equals(id, user.id) &&
+                Objects.equals(cpf, user.cpf) &&
+                Objects.equals(email, user.email) &&
+                Objects.equals(name, user.name) &&
+                Objects.equals(password, user.password) &&
+                userType == user.userType;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, cpf, email, name, password, userType);
+    }
+
     @Override
     public String toString() {
         return "User{" +
@@ -81,7 +112,7 @@ public class User {
                 ", name=" + name + '\'' +
                 ", cpf=" + cpf +
                 ", email=" + email + '\'' +
-                "}";
+                '}';
     }
 }
 
