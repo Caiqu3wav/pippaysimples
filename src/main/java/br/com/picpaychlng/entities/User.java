@@ -1,11 +1,13 @@
 package br.com.picpaychlng.entities;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import java.util.Objects;
+import java.util.List;
 
 @Entity
-@Table(name = "user")
+@Table(name = "users")
 public class User {
 
     @Id
@@ -30,6 +32,12 @@ public class User {
     @Enumerated(EnumType.STRING)
     @Column(name = "user_type")
     private UserType userType;
+
+    @OneToMany(mappedBy = "payer")
+    private List<Transaction> sentTransactions;
+
+    @OneToMany(mappedBy = "receiver")
+    private List<Transaction> receivedTransactions;
 
     public User() {
     }
@@ -113,6 +121,22 @@ public class User {
                 ", cpf=" + cpf +
                 ", email=" + email + '\'' +
                 '}';
+    }
+
+    public List<Transaction> getReceivedTransactions() {
+        return receivedTransactions;
+    }
+
+    public void setReceivedTransactions(List<Transaction> receivedTransactions) {
+        this.receivedTransactions = receivedTransactions;
+    }
+
+    public List<Transaction> getSentTransactions() {
+        return sentTransactions;
+    }
+
+    public void setSentTransactions(List<Transaction> sentTransactions) {
+        this.sentTransactions = sentTransactions;
     }
 }
 
