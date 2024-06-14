@@ -70,7 +70,13 @@ public class Transaction{
         this.createdAt = createdAt;
     }
 
+    public BigDecimal getAmount() {
+        return amount;
+    }
 
+    public void setAmount(BigDecimal amount) {
+        this.amount = amount;
+    }
 
     @Override
     public boolean equals(Object o) {
