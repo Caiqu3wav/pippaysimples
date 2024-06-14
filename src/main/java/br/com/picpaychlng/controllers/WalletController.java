@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Optional;
 
 @RestController
-@RequestMapping("/wallets")
+@RequestMapping("/api/wallets")
 public class WalletController {
 
     private final WalletService walletService;

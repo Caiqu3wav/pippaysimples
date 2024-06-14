@@ -1,5 +1,7 @@
 package br.com.picpaychlng.services;
 
+import br.com.picpaychlng.entities.UserType;
+import br.com.picpaychlng.repositories.UserRepo;
 import org.springframework.stereotype.Service;
 
 import br.com.picpaychlng.entities.Transaction;
@@ -11,7 +13,8 @@ import br.com.picpaychlng.services.WalletService;
 import br.com.picpaychlng.services.NotificationService;
 import br.com.picpaychlng.services.AuthorizationService;
 import br.com.picpaychlng.exceptions.*;
-
+import br.com.picpaychlng.repositories.UserRepo;
+import br.com.picpaychlng.entities.User;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,13 +27,15 @@ public class TransactionService {
     private final WalletService walletService;
     private final NotificationService notificationService;
     private final AuthorizationService authorizationService;
+    private final UserRepo userRepository;
 
     @Autowired
-    public TransactionService(TransactionRepository transactionRepository, WalletService walletService, NotificationService notificationService, AuthorizationService authorizationService) {
+    public TransactionService(TransactionRepository transactionRepository, WalletService walletService, NotificationService notificationService, AuthorizationService authorizationService, UserRepo userRepository) {
         this.transactionRepository = transactionRepository;
         this.walletService = walletService;
         this.notificationService = notificationService;
         this.authorizationService = authorizationService;
+        this.userRepository = userRepository;
     }
 
     public Optional<Transaction> findTransactionById(Long id) {
@@ -47,8 +52,22 @@ public class TransactionService {
     }
 
     @Transactional
-    public Transaction performTransaction(Long payer, Long receiver, BigDecimal amount) {
-        Wallet payerWallet = walletService.findWalletByUserId(payer)
+    public Transaction performTransaction(Long payerId, Long receiverId, BigDecimal amount) throws Exception {
+        Optional<User>  payerOpt = userRepository.findById(payerId);
+        Optional<User> receiverOpt = userRepository.findById(receiverId);
+
+        if (payerOpt.isEmpty() || receiverOpt.isEmpty()) {
+            throw new Exception("Payer or receiver not found");
+        }
+
+        User payer = payerOpt.get();
+        User receiver = receiverOpt.get();
+
+        if (payer.getUserType() == UserType.LOJISTA) {
+            throw new Exception("Lojistas não podem enviar transações");
+        }
+
+        Wallet payerWallet = walletService.findWalletByUserId(payerId)
                 .orElseThrow(() -> new RuntimeException("Carteira do pagador não encontrada"));
 
         if (payerWallet.getBalance().compareTo(amount) < 0) {
@@ -60,7 +79,7 @@ public class TransactionService {
         }
 
         payerWallet.setBalance(payerWallet.getBalance().subtract(amount));
-        Wallet receiverWallet = walletService.findWalletByUserId(receiver)
+        Wallet receiverWallet = walletService.findWalletByUserId(receiverId)
                 .orElseThrow(() -> new RuntimeException("Carteira do recebedor não encontrada"));
 
         receiverWallet.setBalance(receiverWallet.getBalance().add(amount));
@@ -74,7 +93,7 @@ public class TransactionService {
         transaction.setAmount(amount);
         transaction.setCreatedAt(LocalDateTime.now());
         Transaction savedTransaction = transactionRepository.save(transaction);
-        notificationService.notifyUser(receiver, "Você recebeu uma transferência de " + amount);
+        notificationService.notifyUser(receiverId, "Você recebeu uma transferência de " + amount);
 
         return savedTransaction;
     }
